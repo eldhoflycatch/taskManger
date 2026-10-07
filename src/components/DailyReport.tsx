@@ -10,6 +10,8 @@ type DailyReportProps = {
   tasks: Task[];
   sessions: WorkSession[];
   now: number;
+  heading?: string;
+  compact?: boolean;
 };
 
 function taskTotals(sessions: WorkSession[], now: number) {
@@ -26,7 +28,13 @@ function taskTotals(sessions: WorkSession[], now: number) {
   return [...map.values()].sort((a, b) => b.ms - a.ms);
 }
 
-export function DailyReport({ tasks, sessions, now }: DailyReportProps) {
+export function DailyReport({
+  tasks,
+  sessions,
+  now,
+  heading,
+  compact = false,
+}: DailyReportProps) {
   const totalMs = sessions.reduce(
     (sum, session) => sum + sessionDurationMs(session, now),
     0,
@@ -37,17 +45,21 @@ export function DailyReport({ tasks, sessions, now }: DailyReportProps) {
   );
 
   return (
-    <section className="report">
+    <section className={compact ? "report report--compact" : "report"}>
       <header className="report__header">
-        <p className="eyebrow">End of day</p>
-        <h2>Work log — {formatLongDate()}</h2>
-        <p className="report__lede">
-          Full session history for today, including start and end times, duration,
-          and notes.
-        </p>
-        <button type="button" className="btn btn--ghost no-print" onClick={() => window.print()}>
-          Print / save as PDF
-        </button>
+        <p className="eyebrow">{compact ? "Sessions" : "End of day"}</p>
+        <h2>{heading ?? `Work log — ${formatLongDate()}`}</h2>
+        {compact ? null : (
+          <p className="report__lede">
+            Full session history for today, including start and end times, duration,
+            and notes.
+          </p>
+        )}
+        {compact ? null : (
+          <button type="button" className="btn btn--ghost no-print" onClick={() => window.print()}>
+            Print / save as PDF
+          </button>
+        )}
       </header>
 
       <div className="report__stats">
