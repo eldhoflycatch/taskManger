@@ -54,9 +54,13 @@ textarea {
 }
 
 .app {
-  width: min(920px, calc(100% - 2rem));
+  width: min(960px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 2.5rem 0 4rem;
+}
+
+.app--narrow {
+  width: min(560px, calc(100% - 2rem));
 }
 
 .masthead {
@@ -92,7 +96,9 @@ textarea {
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .tab,
@@ -138,7 +144,10 @@ textarea {
 .add-task,
 .session-note,
 .task-card,
-.report {
+.report,
+.panel,
+.live-card,
+.member-report {
   background: var(--card);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -146,10 +155,117 @@ textarea {
 
 .add-task,
 .session-note,
-.report {
+.report,
+.panel,
+.member-report {
   border-radius: 18px;
   padding: 1.25rem 1.35rem;
   margin-bottom: 1.25rem;
+}
+
+.report--compact {
+  box-shadow: none;
+  margin-bottom: 0;
+  padding: 0.2rem 0 0;
+}
+
+.stack {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+.banner {
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.banner--error {
+  background: #fde8df;
+  color: #8a2d12;
+}
+
+.userbar {
+  display: grid;
+  justify-items: end;
+  gap: 0.45rem;
+  text-align: right;
+}
+
+.invite code {
+  font-size: 0.95rem;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.1rem 0.45rem;
+}
+
+.live-board {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.live-card {
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+
+.live-card--active {
+  border-color: var(--pine);
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.saved-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.saved-link {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: #fffdf8;
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.saved-link span {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.saved-link--active {
+  border-color: var(--pine);
+  box-shadow: 0 0 0 2px rgba(31, 77, 58, 0.12);
+}
+
+.member-report__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 0.6rem;
 }
 
 .add-task {

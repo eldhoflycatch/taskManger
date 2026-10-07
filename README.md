@@ -1,19 +1,30 @@
-# Daylog — Daily Task Manager
+# Daylog — Team Task Manager
 
-A browser-only app for today's to-dos, live time tracking, and an end-of-day work log. There is no backend or login. Everything is stored in this browser (`localStorage`).
+A multi-user task manager for teams. People sign in, join a team, track today’s work with timers and notes, and the team lead can see who is working now, review everyone’s end-of-day logs, and save the full team report in SQLite.
+
+There is no cloud host or email invite flow. The API and database run on your machine.
 
 ## How the app works
 
-1. **Add today's tasks** on the Today view (title required, description optional).
-2. **Start** a task when you begin work. Only one timer runs at a time. Starting another task stops the current session first.
-3. While a session is running, add an optional **session note** (what you did in that block of time). Notes save as you type.
-4. **Stop** when you pause, or **Mark done** when the task is finished. Done tasks stay on the list and still appear in the report.
-5. Open **End of day report** for the full work log: each session's task name, start time, end time (or "Running"), duration, and notes. The report also shows total tracked time, task count, session count, and time per task.
-6. Use **Print / save as PDF** on the report if you want a copy of the day.
+**Accounts and teams**
+1. Register (name, email, password) or log in.
+2. Create a team (you become the **lead** and get an invite code) or **join** with a code from your lead.
+3. Each person belongs to one team. Members only see their own tasks.
 
-Refreshing the page keeps your tasks and a running timer (the clock is calculated from the stored start time). Clearing this site's data in the browser wipes the logs.
+**Members**
+1. Add today’s tasks on **Today**.
+2. **Start** a task when you begin. Only one timer runs at a time.
+3. Add an optional session note while you work.
+4. **Stop** or **Mark done**.
+5. Open **My report** for your session log, durations, and totals.
 
-The first screen is always **today**. Older days remain in storage but are not shown in this version.
+**Team lead**
+- Can log their own work like any member.
+- Open **Team** to see who is on a timer right now (refreshes every few seconds).
+- See each teammate’s completed tasks and full session logs for today.
+- **Save team report** writes a snapshot to the database. Reopen a saved day from the list.
+
+Old browser-only `localStorage` data from the first version is not migrated.
 
 ## How to get it running
 
@@ -24,9 +35,11 @@ npm install
 npm run dev
 ```
 
-Open the local URL Vite prints (usually `http://localhost:5173`).
+That starts the API (`http://127.0.0.1:3001`) and the UI. Open the Vite URL (usually `http://localhost:5173`).
 
-To preview a production build:
+The SQLite file is created at `server/data/daylog.db` on first run.
+
+To preview a production UI build (API still needed separately):
 
 ```bash
 npm run build
