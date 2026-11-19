@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
+import type { UserRole } from "../types";
 
 type AuthScreenProps = {
   error: string | null;
   onLogin: (email: string, password: string) => Promise<void>;
-  onRegister: (name: string, email: string, password: string) => Promise<void>;
+  onRegister: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
 };
 
 export function AuthScreen({ error, onLogin, onRegister }: AuthScreenProps) {
@@ -11,6 +12,7 @@ export function AuthScreen({ error, onLogin, onRegister }: AuthScreenProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<UserRole>("member");
   const [pending, setPending] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -20,7 +22,7 @@ export function AuthScreen({ error, onLogin, onRegister }: AuthScreenProps) {
     setPending(true);
     try {
       if (mode === "register") {
-        await onRegister(name, email, password);
+        await onRegister(name, email, password, role);
       } else {
         await onLogin(email, password);
       }
@@ -69,6 +71,15 @@ export function AuthScreen({ error, onLogin, onRegister }: AuthScreenProps) {
                 autoComplete="name"
                 required
               />
+            </label>
+          ) : null}
+          {mode === "register" ? (
+            <label className="field">
+              <span>I am a</span>
+              <select value={role} onChange={(event) => setRole(event.target.value as UserRole)}>
+                <option value="member">Team member (log my daily tasks)</option>
+                <option value="manager">Manager (view and export team reports)</option>
+              </select>
             </label>
           ) : null}
           <label className="field">

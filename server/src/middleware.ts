@@ -26,6 +26,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
       created_at: user.created_at,
     };
     req.membership = getMembership(user.id);
@@ -36,6 +37,10 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireTeam(req: Request, res: Response, next: NextFunction) {
+  if (req.user?.role !== "member") {
+    res.status(403).json({ error: "Only team members log tasks" });
+    return;
+  }
   if (!req.membership) {
     res.status(403).json({ error: "Join a team first" });
     return;
@@ -43,9 +48,9 @@ export function requireTeam(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-export function requireLead(req: Request, res: Response, next: NextFunction) {
-  if (!req.membership || req.membership.role !== "lead") {
-    res.status(403).json({ error: "Team lead only" });
+export function requireManager(req: Request, res: Response, next: NextFunction) {
+  if (req.user?.role !== "manager") {
+    res.status(403).json({ error: "Managers only" });
     return;
   }
   next();

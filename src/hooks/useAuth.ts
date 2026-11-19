@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, setUnauthorizedHandler } from "../api";
-import type { Me } from "../types";
+import type { Me, UserRole } from "../types";
 
 export function useAuth() {
   const [me, setMe] = useState<Me | null>(null);
@@ -34,11 +34,11 @@ export function useAuth() {
   }, []);
 
   const register = useCallback(
-    async (name: string, email: string, password: string) => {
+    async (name: string, email: string, password: string, role: UserRole) => {
       setError(null);
       const data = await api<Me>("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, role }),
       });
       setMe(data);
     },

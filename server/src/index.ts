@@ -3,7 +3,7 @@ import cookieParser from "cookie-parser";
 import { errorHandler, requireAuth } from "./middleware";
 import { meResponse } from "./me";
 import { authRouter } from "./routes/auth";
-import { leadRouter } from "./routes/lead";
+import { managerRouter } from "./routes/manager";
 import { reportsRouter } from "./routes/reports";
 import { sessionsRouter, tasksRouter } from "./routes/tasks";
 import { teamsRouter } from "./routes/teams";
@@ -26,7 +26,7 @@ app.get("/api/me", requireAuth, (req, res) => {
 app.use("/api/teams", teamsRouter);
 app.use("/api/tasks", tasksRouter);
 app.use("/api/sessions", sessionsRouter);
-app.use("/api/lead", leadRouter);
+app.use("/api/manager", managerRouter);
 app.use("/api/reports", reportsRouter);
 
 app.use(errorHandler);

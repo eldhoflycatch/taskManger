@@ -1,10 +1,12 @@
 export type Role = "lead" | "member";
+export type UserRole = "manager" | "member";
 
 export type UserRow = {
   id: string;
   name: string;
   email: string;
   password_hash: string;
+  role: UserRole;
   created_at: string;
 };
 
@@ -18,6 +20,7 @@ export type TeamRow = {
   id: string;
   name: string;
   invite_code: string;
+  manager_id: string | null;
   created_at: string;
 };
 
@@ -48,6 +51,7 @@ export type PublicUser = {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
 };
 
 export type PublicTask = {
@@ -75,9 +79,17 @@ export type TeamSummary = {
   inviteCode?: string;
 };
 
+export type ManagedTeam = {
+  id: string;
+  name: string;
+  inviteCode: string;
+  memberCount: number;
+};
+
 export type MeResponse = {
   user: PublicUser;
   team: TeamSummary | null;
+  managedTeams: ManagedTeam[];
 };
 
 export type MemberDay = {

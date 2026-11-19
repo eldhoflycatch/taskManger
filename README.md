@@ -6,25 +6,20 @@ There is no cloud host or email invite flow. The API and database run on your ma
 
 ## How the app works
 
-**Accounts and teams**
-1. Register (name, email, password) or log in.
-2. Create a team (you become the **lead** and get an invite code) or **join** with a code from your lead.
-3. Each person belongs to one team. Members only see their own tasks.
+**Roles** (chosen at registration)
+- **Manager** — creates one or more teams, each with an invite code, and views/exports their members' work.
+- **Team member** — joins one team with the manager's invite code and logs daily tasks.
 
 **Members**
-1. Add today’s tasks on **Today**.
-2. **Start** a task when you begin. Only one timer runs at a time.
-3. Add an optional session note while you work.
-4. **Stop** or **Mark done**.
-5. Open **My report** for your session log, durations, and totals.
+1. Add today's tasks on **Today**; **Start** one (only one timer runs at a time), add session notes, then **Stop** or **Mark done**.
+2. **My report** shows your session log, durations and totals.
 
-**Team lead**
-- Can log their own work like any member.
-- Open **Team** to see who is on a timer right now (refreshes every few seconds).
-- See each teammate’s completed tasks and full session logs for today.
-- **Save team report** writes a snapshot to the database. Reopen a saved day from the list.
+**Managers**
+- Switch between their teams, add new ones, and share each team's invite code.
+- **Team activity**: who is on a timer now, each member's tasks and sessions for today, and saved end-of-day snapshots.
+- **Export reports**: pick a date range (and optionally one member), then download a **PDF** or **Excel (.xlsx)** with tasks, status, time spent and session notes. The Excel file also has a per-member summary sheet.
 
-Old browser-only `localStorage` data from the first version is not migrated.
+Existing databases are migrated automatically: former team leads become managers who own their team.
 
 ## How to get it running
 

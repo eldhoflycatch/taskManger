@@ -5,6 +5,7 @@ import type {
   MembershipRow,
   SessionRow,
   TaskRow,
+  ManagedTeam,
   TeamDayPayload,
   TeamRow,
   UserRow,
@@ -123,4 +124,76 @@ export function buildTeamDay(team: TeamRow, day: string = todayKey()): TeamDayPa
     teamName: team.name,
     members,
   };
+}
+
+export function listManagedTeams(managerId: string): ManagedTeam[] {
+  const rows = db
+    .prepare(
+      `SELECT t.id, t.name, t.invite_code AS inviteCode,
+              (SELECT COUNT(*) FROM memberships m WHERE m.team_id = t.id) AS memberCount
+       FROM teams t WHERE t.manager_id = ?
+       ORDER BY t.name COLLATE NOCASE`,
+    )
+    .all(managerId) as ManagedTeam[];
+  return rows;
+}
+
+export function getManagedTeam(managerId: string, teamId: string): TeamRow | undefined {
+  return db
+    .prepare("SELECT * FROM teams WHERE id = ? AND manager_id = ?")
+    .get(teamId, managerId) as TeamRow | undefined;
+}
+
+export type ExportRow = {
+  day: string;
+  team: string;
+  member: string;
+  task: string;
+  description: string;
+  status: "todo" | "in_progress" | "done";
+  durationMs: number;
+  notes: string;
+};
+
+/** One row per task for a date range, optionally limited to one member. */
+export function buildRangeRows(
+  team: TeamRow,
+  from: string,
+  to: string,
+  memberId?: string,
+): ExportRow[] {
+  const now = Date.now();
+  const tasks = db
+    .prepare(
+      `SELECT t.*, u.name AS member_name
+       FROM tasks t JOIN users u ON u.id = t.user_id
+       WHERE t.team_id = ? AND t.day_key BETWEEN ? AND ?
+         AND (? IS NULL OR t.user_id = ?)
+       ORDER BY t.day_key, u.name COLLATE NOCASE, t.created_at`,
+    )
+    .all(team.id, from, to, memberId ?? null, memberId ?? null) as (TaskRow & {
+    member_name: string;
+  })[];
+  const sessionStmt = db.prepare(
+    "SELECT * FROM sessions WHERE task_id = ? ORDER BY start_at",
+  );
+  return tasks.map((t) => {
+    const sessions = sessionStmt.all(t.id) as SessionRow[];
+    return {
+      day: t.day_key,
+      team: team.name,
+      member: t.member_name,
+      task: t.title,
+      description: t.description ?? "",
+      status: t.status,
+      durationMs: sessions.reduce(
+        (sum, s) => sum + sessionDurationMs(s.start_at, s.end_at, now),
+        0,
+      ),
+      notes: sessions
+        .map((s) => s.note.trim())
+        .filter(Boolean)
+        .join("; "),
+    };
+  });
 }

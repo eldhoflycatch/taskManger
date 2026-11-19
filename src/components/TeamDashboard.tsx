@@ -3,13 +3,14 @@ import { api } from "../api";
 import { formatClock, formatDuration, formatLongDate } from "../lib/time";
 import type { LiveMember, SavedReport, SavedReportListItem, TeamDayPayload } from "../types";
 import { DailyReport } from "./DailyReport";
+import { DownloadButtons } from "./DownloadButtons";
 
 function parseDay(dayKey: string): Date {
   const [year, month, day] = dayKey.split("-").map(Number);
   return new Date(year, (month ?? 1) - 1, day ?? 1);
 }
 
-export function TeamDashboard() {
+export function TeamDashboard({ teamId }: { teamId: string }) {
   const [live, setLive] = useState<LiveMember[]>([]);
   const [today, setToday] = useState<TeamDayPayload | null>(null);
   const [saved, setSaved] = useState<SavedReportListItem[]>([]);
@@ -17,20 +18,21 @@ export function TeamDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+
   const loadLive = useCallback(async () => {
-    const data = await api<{ members: LiveMember[] }>("/lead/live");
+    const data = await api<{ members: LiveMember[] }>(`/manager/live?teamId=${teamId}`);
     setLive(data.members);
-  }, []);
+  }, [teamId]);
 
   const loadToday = useCallback(async () => {
-    const data = await api<TeamDayPayload>("/lead/today");
+    const data = await api<TeamDayPayload>(`/manager/day?teamId=${teamId}`);
     setToday(data);
-  }, []);
+  }, [teamId]);
 
   const loadSaved = useCallback(async () => {
-    const data = await api<{ reports: SavedReportListItem[] }>("/reports");
+    const data = await api<{ reports: SavedReportListItem[] }>(`/reports?teamId=${teamId}`);
     setSaved(data.reports);
-  }, []);
+  }, [teamId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +55,7 @@ export function TeamDashboard() {
     setSaving(true);
     setError(null);
     try {
-      const report = await api<SavedReport>("/reports", { method: "POST" });
+      const report = await api<SavedReport>("/reports", { method: "POST", body: JSON.stringify({ teamId }) });
       setSelected(null);
       await Promise.all([loadSaved(), loadToday()]);
       setSelected(report);
@@ -67,7 +69,7 @@ export function TeamDashboard() {
   async function openSaved(dayKey: string) {
     setError(null);
     try {
-      setSelected(await api<SavedReport>(`/reports/${dayKey}`));
+      setSelected(await api<SavedReport>(`/reports/${dayKey}?teamId=${teamId}`));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not open report");
     }
@@ -86,7 +88,7 @@ export function TeamDashboard() {
           <p className="report__lede">Updates every few seconds from the team’s current timers.</p>
         </header>
         {live.length === 0 ? (
-          <p className="empty">No teammates yet.</p>
+          <p className="empty">No teammates yet. Share the team invite code so members can join.</p>
         ) : (
           <ul className="live-board">
             {live.map((member) => (
@@ -173,6 +175,11 @@ export function TeamDashboard() {
               </p>
             )}
           </header>
+          <DownloadButtons
+            path="/manager/export"
+            params={{ teamId, from: report.dayKey, to: report.dayKey }}
+            filenameBase={`${report.teamName.replace(/[^a-z0-9]+/gi, "-")}-${report.dayKey}`}
+          />
 
           {report.members.map((member) => (
             <article key={member.id} className="member-report">

@@ -20,7 +20,7 @@ export function inviteCode(): string {
 }
 
 export function publicUser(user: UserRow): PublicUser {
-  return { id: user.id, name: user.name, email: user.email };
+  return { id: user.id, name: user.name, email: user.email, role: user.role };
 }
 
 export function mapTask(row: TaskRow): PublicTask {
@@ -53,7 +53,6 @@ export function teamSummary(
     id: team.id,
     name: team.name,
     role: membership.role,
-    inviteCode: membership.role === "lead" ? team.invite_code : undefined,
   };
 }
 
