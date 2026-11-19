@@ -1,19 +1,25 @@
 import { Router } from "express";
 import { db } from "../db";
-import { asyncHandler, requireAuth, requireLead, requireTeam } from "../middleware";
-import { buildTeamDay, getTeam } from "../queries";
+import { asyncHandler, requireAuth, requireManager } from "../middleware";
+import { buildTeamDay, getManagedTeam } from "../queries";
 import { todayKey } from "../time";
 import { createId, HttpError } from "../util";
 
 export const reportsRouter = Router();
 
+function teamFor(req: import("express").Request) {
+  const teamId = String(req.query.teamId ?? req.body?.teamId ?? "");
+  const team = getManagedTeam(req.user!.id, teamId);
+  if (!team) throw new HttpError(404, "Team not found");
+  return team;
+}
+
 reportsRouter.post(
   "/",
   requireAuth,
-  requireTeam,
-  requireLead,
+  requireManager,
   asyncHandler(async (req, res) => {
-    const team = getTeam(req.membership!.team_id)!;
+    const team = teamFor(req);
     const day = todayKey();
     const payload = buildTeamDay(team, day);
     const savedAt = new Date().toISOString();
@@ -56,7 +62,7 @@ reportsRouter.post(
   }),
 );
 
-reportsRouter.get("/", requireAuth, requireTeam, requireLead, (req, res) => {
+reportsRouter.get("/", requireAuth, requireManager, (req, res) => {
   const rows = db
     .prepare(
       `SELECT r.id, r.day_key, r.saved_at, u.name AS saved_by
@@ -65,7 +71,7 @@ reportsRouter.get("/", requireAuth, requireTeam, requireLead, (req, res) => {
        WHERE r.team_id = ?
        ORDER BY r.day_key DESC`,
     )
-    .all(req.membership!.team_id) as {
+    .all(teamFor(req).id) as {
     id: string;
     day_key: string;
     saved_at: string;
@@ -85,8 +91,7 @@ reportsRouter.get("/", requireAuth, requireTeam, requireLead, (req, res) => {
 reportsRouter.get(
   "/:dayKey",
   requireAuth,
-  requireTeam,
-  requireLead,
+  requireManager,
   asyncHandler(async (req, res) => {
     const row = db
       .prepare(
@@ -95,7 +100,7 @@ reportsRouter.get(
          JOIN users u ON u.id = r.saved_by
          WHERE r.team_id = ? AND r.day_key = ?`,
       )
-      .get(req.membership!.team_id, req.params.dayKey) as
+      .get(teamFor(req).id, req.params.dayKey) as
       | {
           id: string;
           day_key: string;

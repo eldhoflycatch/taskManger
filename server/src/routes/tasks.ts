@@ -6,9 +6,12 @@ import {
   getSession,
   getTask,
   getUserSessions,
+  getTeam,
   getUserTasks,
+  buildRangeRows,
 } from "../queries";
 import { todayKey } from "../time";
+import { buildExcel, buildPdf } from "../export";
 import { createId, HttpError, mapSession, mapTask } from "../util";
 
 export const tasksRouter = Router();
@@ -41,6 +44,29 @@ tasksRouter.get(
   (req, res) => {
     res.json(workPayload(req.user!.id));
   },
+);
+
+tasksRouter.get(
+  "/export",
+  requireAuth,
+  requireTeam,
+  asyncHandler(async (req, res) => {
+    const day = String(req.query.day ?? todayKey());
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new HttpError(400, "day must be YYYY-MM-DD");
+    const format = req.query.format === "xlsx" ? "xlsx" : req.query.format === "pdf" ? "pdf" : null;
+    if (!format) throw new HttpError(400, "format must be pdf or xlsx");
+    const team = getTeam(req.membership!.team_id)!;
+    const rows = buildRangeRows(team, day, day, req.user!.id);
+    const meta = { teamName: team.name, from: day, to: day, memberName: req.user!.name };
+    res.setHeader("Content-Disposition", `attachment; filename="my-report-${day}.${format}"`);
+    if (format === "xlsx") {
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.send(await buildExcel(rows, meta));
+    } else {
+      res.setHeader("Content-Type", "application/pdf");
+      res.send(await buildPdf(rows, meta));
+    }
+  }),
 );
 
 tasksRouter.post(

@@ -30,6 +30,7 @@ authRouter.post(
     const name = String(req.body?.name ?? "").trim();
     const email = String(req.body?.email ?? "").trim().toLowerCase();
     const password = String(req.body?.password ?? "");
+    const role = req.body?.role === "manager" ? "manager" : "member";
 
     if (!name || !email || !password) {
       throw new HttpError(400, "Name, email, and password are required");
@@ -49,11 +50,12 @@ authRouter.post(
       name,
       email,
       password_hash: await bcrypt.hash(password, 10),
+      role: role as "manager" | "member",
       created_at: new Date().toISOString(),
     };
     db.prepare(
-      "INSERT INTO users (id, name, email, password_hash, created_at) VALUES (?, ?, ?, ?, ?)",
-    ).run(user.id, user.name, user.email, user.password_hash, user.created_at);
+      "INSERT INTO users (id, name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).run(user.id, user.name, user.email, user.password_hash, user.role, user.created_at);
 
     setAuthCookie(res, user.id);
     res.status(201).json(meResponse(user));

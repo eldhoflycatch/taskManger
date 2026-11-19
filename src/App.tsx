@@ -2,21 +2,22 @@ import { useState } from "react";
 import { AddTaskForm } from "./components/AddTaskForm";
 import { AuthScreen } from "./components/AuthScreen";
 import { DailyReport } from "./components/DailyReport";
+import { DownloadButtons } from "./components/DownloadButtons";
 import { SessionNote } from "./components/SessionNote";
 import { TaskList } from "./components/TaskList";
-import { TeamDashboard } from "./components/TeamDashboard";
+import { ManagerApp } from "./components/ManagerApp";
 import { TeamSetup } from "./components/TeamSetup";
 import { useAuth } from "./hooks/useAuth";
 import { useNow } from "./hooks/useNow";
 import { useTaskStore } from "./hooks/useTaskStore";
 import { formatLongDate } from "./lib/time";
 
-type View = "today" | "report" | "team";
+type View = "today" | "report";
 
 export default function App() {
   const auth = useAuth();
-  const inApp = Boolean(auth.me?.team);
-  const isLead = auth.me?.team?.role === "lead";
+  const isManager = auth.me?.user.role === "manager";
+  const inApp = Boolean(auth.me?.team) && !isManager;
   const [view, setView] = useState<View>("today");
   const {
     todaysTasks,
@@ -52,11 +53,34 @@ export default function App() {
     );
   }
 
+  if (isManager) {
+    return (
+      <div className="app">
+        <header className="masthead">
+          <div>
+            <p className="eyebrow">Daylog</p>
+            <h1>Manager dashboard</h1>
+            <p className="masthead__date">{formatLongDate()}</p>
+          </div>
+          <div className="userbar no-print">
+            <p>
+              <strong>{auth.me.user.name}</strong>
+              <span className="muted"> · Manager</span>
+            </p>
+            <button type="button" className="btn btn--ghost" onClick={() => void auth.logout()}>
+              Log out
+            </button>
+          </div>
+        </header>
+        <ManagerApp teams={auth.me.managedTeams} onCreateTeam={auth.createTeam} />
+      </div>
+    );
+  }
+
   if (!auth.me.team) {
     return (
       <TeamSetup
         userName={auth.me.user.name}
-        onCreate={auth.createTeam}
         onJoin={auth.joinTeam}
         onLogout={auth.logout}
       />
@@ -64,7 +88,7 @@ export default function App() {
   }
 
   const team = auth.me.team;
-  const currentView = view === "team" && !isLead ? "today" : view;
+  const currentView = view;
 
   return (
     <div className="app">
@@ -79,14 +103,9 @@ export default function App() {
             <strong>{auth.me.user.name}</strong>
             <span className="muted">
               {" "}
-              · {team.name} · {team.role === "lead" ? "Lead" : "Member"}
+              · {team.name} · Member
             </span>
           </p>
-          {team.inviteCode ? (
-            <p className="invite">
-              Invite code <code>{team.inviteCode}</code>
-            </p>
-          ) : null}
           <button type="button" className="btn btn--ghost" onClick={() => void auth.logout()}>
             Log out
           </button>
@@ -108,15 +127,6 @@ export default function App() {
         >
           My report
         </button>
-        {isLead ? (
-          <button
-            type="button"
-            className={currentView === "team" ? "tab tab--active" : "tab"}
-            onClick={() => setView("team")}
-          >
-            Team
-          </button>
-        ) : null}
       </nav>
 
       <main>
@@ -146,13 +156,15 @@ export default function App() {
           </>
         ) : null}
         {currentView === "report" ? (
-          <DailyReport
-            tasks={todaysTasks}
-            sessions={todaysSessions}
-            now={now}
-          />
+          <>
+            <DownloadButtons path="/tasks/export" params={{}} filenameBase={`my-report-${new Date().toLocaleDateString("sv-SE")}`} />
+            <DailyReport
+              tasks={todaysTasks}
+              sessions={todaysSessions}
+              now={now}
+            />
+          </>
         ) : null}
-        {currentView === "team" && isLead ? <TeamDashboard /> : null}
       </main>
     </div>
   );

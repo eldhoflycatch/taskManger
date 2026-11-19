@@ -49,6 +49,7 @@ p {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -290,6 +291,7 @@ textarea {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -477,4 +479,23 @@ textarea {
     box-shadow: none;
     background: transparent;
   }
+}
+
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+  margin: 1rem 0;
+}
+
+.team-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.btn-link {
+  text-decoration: none;
+  display: inline-block;
 }

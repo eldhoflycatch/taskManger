@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { db } from "../db";
-import { asyncHandler, requireAuth } from "../middleware";
+import { asyncHandler, requireAuth, requireManager } from "../middleware";
 import { meResponse } from "../me";
-import { getMembership, getTeamByInvite } from "../queries";
+import { getManagedTeam, getMembership, getTeamByInvite, listTeamMembers } from "../queries";
 import { createId, HttpError, inviteCode } from "../util";
 
 export const teamsRouter = Router();
@@ -14,10 +14,8 @@ teamsRouter.get("/current", requireAuth, (req, res) => {
 teamsRouter.post(
   "/",
   requireAuth,
+  requireManager,
   asyncHandler(async (req, res) => {
-    if (req.membership) {
-      throw new HttpError(409, "You already belong to a team");
-    }
     const name = String(req.body?.name ?? "").trim();
     if (!name) {
       throw new HttpError(400, "Team name is required");
@@ -27,6 +25,7 @@ teamsRouter.post(
       id: createId(),
       name,
       invite_code: inviteCode(),
+      manager_id: req.user!.id,
       created_at: new Date().toISOString(),
     };
 
@@ -36,17 +35,11 @@ teamsRouter.post(
       team.invite_code = inviteCode();
     }
 
-    const join = db.transaction(() => {
-      db.prepare(
-        "INSERT INTO teams (id, name, invite_code, created_at) VALUES (?, ?, ?, ?)",
-      ).run(team.id, team.name, team.invite_code, team.created_at);
-      db.prepare(
-        "INSERT INTO memberships (user_id, team_id, role) VALUES (?, ?, 'lead')",
-      ).run(req.user!.id, team.id);
-    });
-    join();
+    db.prepare(
+      "INSERT INTO teams (id, name, invite_code, manager_id, created_at) VALUES (?, ?, ?, ?, ?)",
+    ).run(team.id, team.name, team.invite_code, team.manager_id, team.created_at);
 
-    res.status(201).json(meResponse(req.user!, getMembership(req.user!.id)));
+    res.status(201).json(meResponse(req.user!));
   }),
 );
 
@@ -54,6 +47,9 @@ teamsRouter.post(
   "/join",
   requireAuth,
   asyncHandler(async (req, res) => {
+    if (req.user!.role !== "member") {
+      throw new HttpError(403, "Managers create teams; members join them");
+    }
     if (req.membership) {
       throw new HttpError(409, "You already belong to a team");
     }
@@ -75,4 +71,25 @@ teamsRouter.post(
 
     res.json(meResponse(req.user!, getMembership(req.user!.id)));
   }),
+);
+
+teamsRouter.get("/:teamId/members", requireAuth, requireManager, (req, res) => {
+  const team = getManagedTeam(req.user!.id, req.params.teamId);
+  if (!team) throw new HttpError(404, "Team not found");
+  res.json({ members: listTeamMembers(team.id) });
+});
+
+teamsRouter.delete(
+  "/:teamId/members/:userId",
+  requireAuth,
+  requireManager,
+  (req, res) => {
+    const team = getManagedTeam(req.user!.id, req.params.teamId);
+    if (!team) throw new HttpError(404, "Team not found");
+    const result = db
+      .prepare("DELETE FROM memberships WHERE team_id = ? AND user_id = ?")
+      .run(team.id, req.params.userId);
+    if (result.changes === 0) throw new HttpError(404, "Member not found");
+    res.status(204).end();
+  },
 );

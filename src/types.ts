@@ -18,22 +18,32 @@ export type WorkSession = {
   note: string;
 };
 
+export type UserRole = "manager" | "member";
+
 export type User = {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
+};
+
+export type ManagedTeam = {
+  id: string;
+  name: string;
+  inviteCode: string;
+  memberCount: number;
 };
 
 export type Team = {
   id: string;
   name: string;
-  role: "lead" | "member";
-  inviteCode?: string;
+  role: "member";
 };
 
 export type Me = {
   user: User;
   team: Team | null;
+  managedTeams: ManagedTeam[];
 };
 
 export type WorkPayload = {
